@@ -1,0 +1,236 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: #ffffff;
+    color: #1a1a1a;
+    overflow-x: hidden;
+}
+
+.screen {
+    display: none;
+    width: 100vw;
+    min-height: 100vh;
+    padding: 2rem 4rem;
+    flex-direction: column;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.navbar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    width: 100%;
+    max-width: 100%;
+    position: relative;
+}
+
+.logo-container {
+    margin-top: -1.5rem;
+    margin-left: -3.5rem;
+}
+
+.logo-img {
+    height: 110px;
+    width: auto;
+    object-fit: contain;
+}
+
+.social-links {
+    position: absolute;
+    left: 50%;
+    top: 0;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 3rem;
+    padding-top: 0.5rem;
+}
+
+.social-links a {
+    text-decoration: none;
+    color: #333;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: color 0.2s ease;
+}
+
+.social-links a:hover {
+    color: #888;
+}
+
+.hero-container {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    width: 100%;
+    max-width: 1100px;
+    margin: 2rem auto 0 auto;
+}
+
+.hero-content {
+    flex: 1;
+    padding-right: 3rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.hero-intro {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #444;
+    margin-bottom: 0.5rem;
+}
+
+.hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 5.5rem;
+    font-weight: 700;
+    line-height: 1.1;
+    color: #000;
+    margin-bottom: 1.5rem;
+}
+
+.hero-description {
+    font-size: 1.05rem;
+    color: rgba(0, 0, 0, 0.45);
+    line-height: 1.6;
+    margin-bottom: 2.5rem;
+    max-width: 480px;
+    font-weight: 500;
+    text-wrap: pretty;
+}
+
+.btn-primary {
+    background-color: #000;
+    color: #fff;
+    border: 2px solid #000;
+    padding: 0.8rem 2.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 50px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+}
+
+.btn-primary:hover {
+    background-color: #fff;
+    color: #000;
+}
+
+.btn-primary:active {
+    transform: scale(0.98);
+}
+
+.sparkle-icon {
+    transition: fill 0.3s ease;
+}
+
+.arrow {
+    display: inline-block;
+    transition: transform 0.3s ease;
+}
+
+.btn-primary:hover .arrow {
+    transform: translateX(6px);
+}
+
+.hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: flex-end;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease 0.3s forwards;
+}
+
+.avatar {
+    max-width: 100%;
+    height: auto;
+    max-height: 650px;
+    object-fit: contain;
+    display: block;
+}
+
+.footer {
+    text-align: center;
+    font-size: 0.85rem;
+    color: #a0a0a0;
+    padding-top: 1rem;
+    margin-top: auto;
+}
+
+@keyframes fadeInUp {
+    0% {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+
+    100% {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 900px) {
+    .screen {
+        padding: 2rem;
+    }
+
+    .navbar {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .logo-container {
+        margin: 0;
+    }
+
+    .social-links {
+        position: relative;
+        left: 0;
+        transform: none;
+        top: 0;
+        padding-top: 0;
+    }
+
+    .hero-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: 3rem;
+    }
+
+    .hero-content {
+        padding-right: 0;
+        align-items: center;
+    }
+
+    .hero-title {
+        font-size: 4rem;
+    }
+
+    .hero-image {
+        justify-content: center;
+        margin-top: 3rem;
+    }
+
+    .avatar {
+        max-height: 400px;
+    }
+}

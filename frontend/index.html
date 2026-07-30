@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insightia - Assistente de Análise de Dados</title>
+    <link rel="stylesheet" href="style.css">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Inter:wght@400;500;600&display=swap"
+        rel="stylesheet">
+</head>
+
+<body>
+    <section id="home-screen" class="screen active">
+        <header class="navbar">
+            <div class="logo-container">
+                <img src="assets/logo.png" alt="Insightia Logo" class="logo-img">
+            </div>
+            <nav class="social-links">
+                <a href="https://github.com/toxyo1" target="_blank">GitHub</a>
+                <a href="https://linkedin.com/in/marian-lopes999" target="_blank">LinkedIn</a>
+            </nav>
+        </header>
+
+        <main class="hero-container">
+            <div class="hero-content">
+                <p class="hero-intro">Simplifique suas análises combinando</p>
+                <h1 class="hero-title">Dados e IA</h1>
+                <p class="hero-description">Faça o upload do seu arquivo CSV e tire dúvidas de forma rápida, clara e
+                    direta para otimizar suas análises.</p>
+                <button id="start-btn" class="btn-primary">
+                    Acessar
+                    <svg class="sparkle-icon" width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+                        <path
+                            d="M10.5 2L12.36 8.14L18.5 10L12.36 11.86L10.5 18L8.64 11.86L2.5 10L8.64 8.14L10.5 2ZM19 15L18.26 17.26L16 18L18.26 18.74L19 21L19.74 18.74L22 18L19.74 17.26L19 15ZM20 3L19.42 4.42L18 5L19.42 5.58L20 7L20.58 5.58L22 5L20.58 4.42L20 3Z" />
+                    </svg>
+                    <span class="arrow">&rarr;</span>
+                </button>
+            </div>
+            <div class="hero-image">
+                <img src="assets/avatar.png" alt="Avatar minimalista" class="avatar">
+            </div>
+        </main>
+
+        <footer class="footer">
+            <p>Insightia &copy; 2026 - Desenvolvido por Marian Lopes</p>
+        </footer>
+    </section>
+
+    <section id="chat-screen" class="screen hidden">
+    </section>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
