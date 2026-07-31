@@ -49,6 +49,59 @@
     </section>
 
     <section id="chat-screen" class="screen hidden">
+        <header class="navbar chat-navbar">
+            <div class="logo-container">
+                <img src="assets/logo.png" alt="Insightia Logo" class="logo-img">
+            </div>
+            <button id="back-home-btn" class="btn-secondary">Voltar ao início</button>
+        </header>
+
+        <div class="workspace">
+            <aside class="upload-sidebar">
+                <h2>Fonte de Dados</h2>
+                <p class="upload-desc">Envie seu arquivo para começar a conversar com seus dados.</p>
+
+                <div id="drop-zone" class="drop-zone">
+                    <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="17 8 12 3 7 8"></polyline>
+                        <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span>Arraste seu arquivo CSV aqui ou <label for="file-input"
+                            class="browse-link">procure</label></span>
+                    <input type="file" id="file-input" accept=".csv" hidden>
+                </div>
+
+                <div id="file-info" class="file-info hidden">
+                    <span id="file-name">arquivo.csv</span>
+                    <button id="remove-file" title="Remover arquivo">&times;</button>
+                </div>
+            </aside>
+
+            <main class="chat-container">
+                <div id="chat-messages" class="chat-messages">
+                    <div class="message ai-message">
+                        Olá! Envie um arquivo CSV ao lado para que eu possa te ajudar a analisar os dados.
+                    </div>
+                </div>
+
+                <form id="chat-form" class="chat-form">
+                    <input type="text" id="chat-input" placeholder="Faça uma pergunta sobre os dados..." disabled
+                        autocomplete="off">
+                    <button type="submit" id="send-btn" disabled>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </form>
+            </main>
+        </div>
+
+        <footer class="footer">
+            <p>Insightia &copy; 2026 - Desenvolvido por Marian Lopes</p>
+        </footer>
     </section>
 
     <script src="script.js"></script>
