@@ -767,8 +767,11 @@ body {
     font-size: 0.9rem;
 }
 
-/* --- AJUSTES DO CELULAR E RESPONSIVIDADE --- */
 @media (max-width: 900px) {
+    .hide-on-mobile {
+        display: none !important;
+    }
+
     .screen {
         padding: 1.5rem;
         height: auto;
@@ -824,7 +827,6 @@ body {
         max-height: 400px;
     }
 
-    /* Área de Análise e Upload */
     .workspace {
         height: auto;
         max-height: none;
