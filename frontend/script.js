@@ -126,7 +126,7 @@ async function analyzeFile(file) {
     aiReportContent.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
             <div class="loading-dots"><span></span><span></span><span></span></div>
-            <p class="placeholder-text" style="font-style:normal;">Analisando qualidade dos dados e gerando relatório IA...</p>
+            <p class="placeholder-text" style="font-style:normal;">Analisando qualidade dos dados e gerando relatório...</p>
         </div>
     `;
     openRulesBtn.disabled = true;
