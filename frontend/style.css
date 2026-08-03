@@ -198,77 +198,6 @@ body {
     }
 }
 
-@media (max-width: 900px) {
-    .screen {
-        padding: 2rem;
-        height: auto;
-        overflow: visible;
-    }
-
-    .navbar {
-        flex-direction: column;
-        align-items: center;
-        gap: 1.5rem;
-    }
-
-    .logo-container {
-        margin: 0;
-    }
-
-    .social-links {
-        position: relative;
-        left: 0;
-        transform: none;
-        top: 0;
-        padding-top: 0;
-    }
-
-    .nav-cta {
-        position: relative;
-        top: 0;
-        margin-top: 1rem;
-    }
-
-    .hero-container {
-        flex-direction: column;
-        align-items: center;
-        text-align: center;
-        margin-top: 3rem;
-    }
-
-    .hero-content {
-        padding-right: 0;
-        align-items: center;
-    }
-
-    .hero-title {
-        font-size: 4rem;
-    }
-
-    .hero-image {
-        justify-content: center;
-        margin-top: 3rem;
-    }
-
-    .avatar {
-        max-height: 400px;
-    }
-
-    .dual-column-layout {
-        grid-template-columns: 1fr !important;
-    }
-
-    .left-panel {
-        border-right: none !important;
-        padding-right: 0 !important;
-        min-height: auto !important;
-    }
-
-    .right-panel {
-        padding-left: 0 !important;
-    }
-}
-
 .chat-navbar {
     padding-bottom: 1rem;
     border-bottom: 1px solid #eaeaea;
@@ -836,4 +765,93 @@ body {
 .modal-actions .btn-secondary {
     padding: 0.65rem 1.6rem;
     font-size: 0.9rem;
+}
+
+/* --- AJUSTES DO CELULAR E RESPONSIVIDADE --- */
+@media (max-width: 900px) {
+    .screen {
+        padding: 1.5rem;
+        height: auto;
+        overflow: visible;
+    }
+
+    .navbar {
+        flex-direction: column;
+        align-items: center;
+        gap: 1.5rem;
+    }
+
+    .logo-container {
+        margin: 0;
+    }
+
+    .social-links {
+        position: relative;
+        left: 0;
+        transform: none;
+        top: 0;
+        padding-top: 0;
+    }
+
+    .nav-cta {
+        position: relative;
+        top: 0;
+        margin-top: 1rem;
+    }
+
+    .hero-container {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin-top: 3rem;
+    }
+
+    .hero-content {
+        padding-right: 0;
+        align-items: center;
+    }
+
+    .hero-title {
+        font-size: 3.5rem;
+    }
+
+    .hero-image {
+        justify-content: center;
+        margin-top: 3rem;
+    }
+
+    .avatar {
+        max-height: 400px;
+    }
+
+    /* Área de Análise e Upload */
+    .workspace {
+        height: auto;
+        max-height: none;
+        margin-top: 1rem;
+    }
+
+    .dual-column-layout {
+        grid-template-columns: 1fr !important;
+        gap: 2rem;
+    }
+
+    .left-panel,
+    .right-panel {
+        border-right: none !important;
+        padding: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow-y: visible !important;
+    }
+
+    .stats-grid {
+        gap: 12px;
+    }
+
+    .footer {
+        margin-top: 3rem;
+        padding-bottom: 1rem;
+        position: relative;
+    }
 }

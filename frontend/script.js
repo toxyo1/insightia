@@ -4,7 +4,6 @@ const backHomeBtn = document.getElementById('back-home-btn');
 const homeScreen = document.getElementById('home-screen');
 const chatScreen = document.getElementById('chat-screen');
 
-// URL base do backend — troque aqui se o endereço do Render mudar
 const API_BASE_URL = 'https://data-analyst-assistant-rdc4.onrender.com';
 
 function switchScreen(hideScreen, showScreen) {
