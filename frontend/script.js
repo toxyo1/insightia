@@ -4,6 +4,9 @@ const backHomeBtn = document.getElementById('back-home-btn');
 const homeScreen = document.getElementById('home-screen');
 const chatScreen = document.getElementById('chat-screen');
 
+// URL base do backend — troque aqui se o endereço do Render mudar
+const API_BASE_URL = 'https://data-analyst-assistant-rdc4.onrender.com';
+
 function switchScreen(hideScreen, showScreen) {
     hideScreen.classList.remove('active');
     hideScreen.classList.add('hidden');
@@ -119,6 +122,7 @@ function resetUI() {
     openRulesBtn.disabled = true;
     rulesModal.classList.add('hidden');
 }
+
 async function analyzeFile(file) {
     aiReportContent.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; gap:14px;">
@@ -136,7 +140,7 @@ async function analyzeFile(file) {
     formData.append('file', file);
 
     try {
-        const response = await fetch('https://data-analyst-assistant-rdc4.onrender.com', {
+        const response = await fetch(`${API_BASE_URL}/analyze`, {
             method: 'POST',
             body: formData
         });
@@ -180,7 +184,7 @@ async function downloadCleanedFile(file, regras) {
     formData.append('normalizar_colunas', regras.colunas);
 
     try {
-        const response = await fetch('https://data-analyst-assistant-rdc4.onrender.com/analyze', {
+        const response = await fetch(`${API_BASE_URL}/clean`, {
             method: 'POST',
             body: formData
         });
