@@ -136,7 +136,7 @@ async function analyzeFile(file) {
     formData.append('file', file);
 
     try {
-        const response = await fetch('http://localhost:8000/analyze', {
+        const response = await fetch('https://data-analyst-assistant-rdc4.onrender.com', {
             method: 'POST',
             body: formData
         });
@@ -180,7 +180,7 @@ async function downloadCleanedFile(file, regras) {
     formData.append('normalizar_colunas', regras.colunas);
 
     try {
-        const response = await fetch('http://localhost:8000/clean', {
+        const response = await fetch('https://data-analyst-assistant-rdc4.onrender.com', {
             method: 'POST',
             body: formData
         });
