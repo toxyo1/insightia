@@ -1,15 +1,3 @@
-"""
-Insightia API — análise e padronização de qualidade de dados em arquivos CSV.
-
-Arquitetura:
-- Pandas calcula todas as métricas exatas (linhas, nulos, duplicatas, score).
-  A IA nunca faz contas: ela só recebe os números já prontos e redige o texto.
-- Tudo em memória: nenhum arquivo é salvo em disco. O front-end reenvia o CSV
-  original a cada chamada (/analyze e /clean são independentes), então não
-  há necessidade de persistir estado entre requisições.
-- Chave de API somente via variável de ambiente (.env), nunca hardcoded.
-"""
-
 from fastapi import FastAPI, UploadFile, File, HTTPException, Form
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -53,7 +41,7 @@ MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 
 def ler_csv_com_limite(contents: bytes) -> pd.DataFrame:
-    """Valida o tamanho e faz o parse do CSV, com mensagens de erro amigáveis."""
+    """Valida o tamanho e faz o parse do CSV."""
     if len(contents) > MAX_UPLOAD_BYTES:
         raise HTTPException(
             status_code=413,
@@ -67,12 +55,11 @@ def ler_csv_com_limite(contents: bytes) -> pd.DataFrame:
             detail=f"Não foi possível ler o CSV. Verifique o formato (delimitador, encoding). Detalhe: {str(e)}",
         )
 
-
 # --- Endpoints ---
 
 @app.get("/")
 def home():
-    """Health check simples — confirma que o servidor subiu e qual modelo está ativo."""
+    """Confirma que o servidor subiu e qual modelo está ativo."""
     return {"status": "Servidor rodando!", "modelo_configurado": MODEL_NAME}
 
 
@@ -86,12 +73,19 @@ async def analyze_data(file: UploadFile = File(...)):
     # --- Cálculos ---
     total_linhas = len(df)
     total_colunas = len(df.columns)
-    duplicatas = int(df.duplicated().sum())
-    nulos = int(df.isnull().sum().sum())
-
     total_celulas = total_linhas * total_colunas
-    taxa_erros = (duplicatas + nulos) / total_celulas if total_celulas > 0 else 0
-    score = max(0, min(100, int(100 - (taxa_erros * 100))))
+
+    if total_celulas > 0:
+        duplicatas = int(df.duplicated().sum())
+        nulos = int(df.isnull().sum().sum())
+        celulas_duplicadas = duplicatas * total_colunas
+        taxa_erros = min(1.0, (celulas_duplicadas + nulos) / total_celulas)
+        score = max(0, min(100, round((1 - taxa_erros) * 100)))
+    else:
+        duplicatas = 0
+        nulos = 0
+        taxa_erros = 0.0
+        score = 100
 
     # --- Prompt de contexto para a IA ---
     prompt = f"""
@@ -128,31 +122,3 @@ async def analyze_data(file: UploadFile = File(...)):
         },
         "relatorio_ia": relatorio,
     }
-
-
-@app.post("/clean")
-async def clean_data(
-    file: UploadFile = File(...),
-    remover_duplicatas: bool = Form(True),
-    preencher_nulos: bool = Form(True),
-    normalizar_colunas: bool = Form(True),
-):
-    """Aplica a padronização escolhida pelo usuário e devolve o arquivo limpo para download."""
-
-    contents = await file.read()
-    df = ler_csv_com_limite(contents)
-
-    # --- Regras de limpeza ---
-    if remover_duplicatas:
-        df = df.drop_duplicates()
-    if preencher_nulos:
-        df = df.fillna("Não Informado")
-    if normalizar_colunas:
-        df.columns = df.columns.str.strip().str.lower()
-
-    stream = io.StringIO()
-    df.to_csv(stream, index=False)
-
-    response = StreamingResponse(iter([stream.getvalue()]), media_type="text/csv")
-    response.headers["Content-Disposition"] = f"attachment; filename=Insightia_Padronizado_{file.filename}"
-    return response
