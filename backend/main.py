@@ -19,7 +19,6 @@ if not GEMINI_API_KEY:
     )
 
 client = genai.Client(api_key=GEMINI_API_KEY)
-
 MODEL_NAME = "gemini-3.6-flash"
 
 # --- Configuração da aplicação -----------------------------------------------
@@ -41,14 +40,14 @@ MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
 
 def ler_csv_com_limite(contents: bytes) -> pd.DataFrame:
-    """Valida o tamanho e faz o parse do CSV."""
+    """Valida o tamanho e lê o CSV com detecção automática de delimitador."""
     if len(contents) > MAX_UPLOAD_BYTES:
         raise HTTPException(
             status_code=413,
             detail=f"Arquivo muito grande. O limite atual é {MAX_UPLOAD_BYTES // (1024 * 1024)}MB.",
         )
     try:
-        return pd.read_csv(io.BytesIO(contents))
+        return pd.read_csv(io.BytesIO(contents), sep=None, engine="python")
     except Exception as e:
         raise HTTPException(
             status_code=400,
@@ -59,18 +58,15 @@ def ler_csv_com_limite(contents: bytes) -> pd.DataFrame:
 
 @app.get("/")
 def home():
-    """Confirma que o servidor subiu e qual modelo está ativo."""
     return {"status": "Servidor rodando!", "modelo_configurado": MODEL_NAME}
 
 
 @app.post("/analyze")
 async def analyze_data(file: UploadFile = File(...)):
-    """Recebe o CSV, extrai métricas exatas com Pandas e gera o insight com IA."""
-
     contents = await file.read()
     df = ler_csv_com_limite(contents)
 
-    # --- Cálculos ---
+    # 1. Cálculos
     total_linhas = len(df)
     total_colunas = len(df.columns)
     total_celulas = total_linhas * total_colunas
@@ -78,16 +74,14 @@ async def analyze_data(file: UploadFile = File(...)):
     if total_celulas > 0:
         duplicatas = int(df.duplicated().sum())
         nulos = int(df.isnull().sum().sum())
-        celulas_duplicadas = duplicatas * total_colunas
-        taxa_erros = min(1.0, (celulas_duplicadas + nulos) / total_celulas)
-        score = max(0, min(100, round((1 - taxa_erros) * 100)))
-    else:
-        duplicatas = 0
-        nulos = 0
-        taxa_erros = 0.0
-        score = 100
 
-    # --- Prompt de contexto para a IA ---
+        celulas_afetadas = (duplicatas * total_colunas) + nulos
+        taxa_erros = min(1.0, celulas_afetadas / total_celulas)
+        score = round((1 - taxa_erros) * 100)
+    else:
+        duplicatas, nulos, score = 0, 0, 100
+
+    # 2. Prompt da IA
     prompt = f"""
     Aja como um Engenheiro de Dados sênior avaliando a qualidade de uma base de dados.
     Acabei de processar um arquivo CSV chamado '{file.filename}' com os seguintes dados:
@@ -103,8 +97,11 @@ async def analyze_data(file: UploadFile = File(...)):
     Não invente nenhuma métrica nova, baseie-se apenas nos números acima. Não cumprimente o usuário.
     """
 
+    # 3. Chamada da IA
     try:
-        response = client.models.generate_content(model=MODEL_NAME, contents=prompt)
+        response = await client.aio.models.generate_content(
+            model=MODEL_NAME, contents=prompt
+        )
         relatorio = response.text.strip()
     except Exception as e:
         relatorio = (
@@ -122,3 +119,35 @@ async def analyze_data(file: UploadFile = File(...)):
         },
         "relatorio_ia": relatorio,
     }
+
+@app.post("/clean")
+async def clean_data(
+    file: UploadFile = File(...),
+    remover_duplicatas: bool = Form(True),
+    preencher_nulos: bool = Form(True),
+    normalizar_colunas: bool = Form(True),
+):
+    """Aplica a padronização escolhida pelo usuário e devolve o arquivo limpo para download."""
+
+    contents = await file.read()
+    df = ler_csv_com_limite(contents)
+
+    # --- Regras de limpeza ---
+    if remover_duplicatas:
+        df = df.drop_duplicates()
+
+    if preencher_nulos:
+        df = df.fillna("Não Informado")
+
+    if normalizar_colunas:
+        df.columns = df.columns.str.strip().str.lower().str.replace(" ", "_")
+
+    stream = io.StringIO()
+    df.to_csv(stream, index=False)
+
+    response = StreamingResponse(
+        iter([stream.getvalue()]), 
+        media_type="text/csv"
+    )
+    response.headers["Content-Disposition"] = f"attachment; filename=Insightia_Padronizado_{file.filename}"
+    return response
