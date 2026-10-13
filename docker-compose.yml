@@ -1,11 +1,50 @@
-version: '3.8'
+# Três instâncias idênticas do Insightia atrás de um NGINX (porta 8080).
+# Cada instância se identifica pela variável INSTANCE_ID.
+
+x-app: &app
+  build: ./backend
+  env_file: ./backend/.env    # contém GEMINI_API_KEY
+  restart: unless-stopped
+  healthcheck:
+    test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+    interval: 5s
+    timeout: 3s
+    retries: 3
+    start_period: 10s
 
 services:
-  insightia_api: 
-    build: ./backend
-    ports:
-      - "8000:8000"
+  app-01:
+    <<: *app
+    environment:
+      INSTANCE_ID: app-01
+
+  app-02:
+    <<: *app
+    environment:
+      INSTANCE_ID: app-02
+
+  app-03:
+    <<: *app
+    environment:
+      INSTANCE_ID: app-03
+
+  # usada só no teste de escala: docker compose --profile escala up -d app-04
+  app-04:
+    <<: *app
+    profiles: ["escala"]
+    environment:
+      INSTANCE_ID: app-04
+
+  nginx:
+    image: nginx:alpine
     volumes:
-      - ./data:/data
-    env_file:
-      - ./backend/.env
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"             # único ponto de entrada
+    depends_on:
+      app-01:
+        condition: service_healthy
+      app-02:
+        condition: service_healthy
+      app-03:
+        condition: service_healthy

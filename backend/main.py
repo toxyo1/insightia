@@ -1,13 +1,33 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Request
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import StreamingResponse, HTMLResponse
 import pandas as pd
 import io
 import os
+import socket
+import zlib
+from datetime import datetime
 from google import genai
 from dotenv import load_dotenv
 
 load_dotenv()
+
+# --- Identificação da instância (vem sempre de variável de ambiente) ---------
+
+INSTANCE_ID = os.getenv("INSTANCE_ID", "app-00")
+HOSTNAME = socket.gethostname()
+
+PALETA = ["#2563eb", "#16a34a", "#ea580c", "#9333ea", "#dc2626", "#0891b2"]
+
+
+def cor_da_instancia(instance_id: str) -> str:
+    """Cor derivada do identificador: app-01 azul, app-02 verde, app-03 laranja..."""
+    digitos = "".join(c for c in instance_id if c.isdigit())
+    indice = int(digitos) - 1 if digitos else zlib.crc32(instance_id.encode())
+    return PALETA[indice % len(PALETA)]
+
+
+COR_INSTANCIA = cor_da_instancia(INSTANCE_ID)
 
 # --- Configuração da IA ---
 
@@ -34,7 +54,17 @@ app.add_middleware(
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
+    expose_headers=["X-Served-By"],  # deixa o frontend ler o cabeçalho via fetch
 )
+
+
+@app.middleware("http")
+async def identificar_instancia(request: Request, call_next):
+    """Adiciona X-Served-By em TODAS as respostas."""
+    resposta = await call_next(request)
+    resposta.headers["X-Served-By"] = INSTANCE_ID
+    return resposta
+
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
@@ -54,11 +84,50 @@ def ler_csv_com_limite(contents: bytes) -> pd.DataFrame:
             detail=f"Não foi possível ler o CSV. Verifique o formato (delimitador, encoding). Detalhe: {str(e)}",
         )
 
+# --- Endpoints de infraestrutura (load balancer) ------------------------------
+
+@app.get("/health")
+def health():
+    """Usado pelo balanceador e pelo Docker para detectar instâncias fora do ar."""
+    return {"status": "ok", "instance": INSTANCE_ID}
+
+
+@app.get("/painel", response_class=HTMLResponse)
+def painel():
+    """Página HTML que mostra, em destaque, qual instância respondeu."""
+    agora = datetime.now().strftime("%H:%M:%S")
+    html = f"""<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Insightia - {INSTANCE_ID}</title>
+  <style>
+    body {{ margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; background: {COR_INSTANCIA};
+           color: #fff; font-family: system-ui, sans-serif; text-align: center; }}
+    h1 {{ font-size: 4rem; margin: .2em 0; }}
+    p  {{ font-size: 1.3rem; margin: .3em 0; opacity: .95; }}
+  </style>
+</head>
+<body>
+  <p>Respondido por:</p>
+  <h1>{INSTANCE_ID}</h1>
+  <p>Hostname: {HOSTNAME}</p>
+  <p>Horário da resposta: {agora}</p>
+</body>
+</html>"""
+    return HTMLResponse(html, headers={"Cache-Control": "no-store"})
+
 # --- Endpoints ---
 
 @app.get("/")
 def home():
-    return {"status": "Servidor rodando!", "modelo_configurado": MODEL_NAME}
+    return {
+        "status": "Servidor rodando!",
+        "modelo_configurado": MODEL_NAME,
+        "instancia": INSTANCE_ID,
+    }
 
 
 @app.post("/analyze")
@@ -118,6 +187,7 @@ async def analyze_data(file: UploadFile = File(...)):
             "score": score,
         },
         "relatorio_ia": relatorio,
+        "instancia": INSTANCE_ID,
     }
 
 @app.post("/clean")
