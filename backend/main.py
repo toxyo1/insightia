@@ -1,11 +1,14 @@
-from fastapi import FastAPI, UploadFile, File, HTTPException, Form
+from fastapi import FastAPI, UploadFile, File, HTTPException, Form, Request, Response, Depends  # [OBS]
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import pandas as pd
 import io
 import os
+import time    # [OBS]
+import random  # [OBS]
 from google import genai
 from dotenv import load_dotenv
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST  # [OBS]
 
 load_dotenv()
 
@@ -21,11 +24,32 @@ if not GEMINI_API_KEY:
 client = genai.Client(api_key=GEMINI_API_KEY)
 MODEL_NAME = "gemini-3.6-flash"
 
+# --- [OBS] Observabilidade (Prometheus) ---------------------------------------
+REQUISICOES = Counter(
+    "http_requests_total", "Total de requisições HTTP", ["route", "method", "status"]
+)
+LATENCIA = Histogram(
+    "http_request_duration_seconds", "Tempo de resposta das requisições HTTP", ["route"]
+)
+
+# --- [OBS] Falha controlada (somente para a demonstração) ---------------------
+TAXA_FALHA = {"valor": 0.0}
+
+
+def injetar_falha(request: Request):
+    """Devolve HTTP 500 em uma fração das requisições, sem mexer nas rotas."""
+    if request.url.path.startswith(("/metrics", "/demo")):
+        return
+    if random.random() < TAXA_FALHA["valor"]:
+        raise HTTPException(status_code=500, detail="Falha simulada para a demonstração")
+
+
 # --- Configuração da aplicação -----------------------------------------------
 
 app = FastAPI(
     title="Insightia API",
     description="API de qualidade de dados: métricas via Pandas + relatório via Gemini",
+    dependencies=[Depends(injetar_falha)],  # [OBS]
 )
 
 app.add_middleware(
@@ -35,6 +59,23 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# [OBS] mede toda requisição: Rate, Errors e Duration
+@app.middleware("http")
+async def medir_requisicoes(request: Request, call_next):
+    inicio = time.perf_counter()
+    status = 500
+    try:
+        resposta = await call_next(request)
+        status = resposta.status_code
+        return resposta
+    finally:
+        rota = getattr(request.scope.get("route"), "path", "desconhecida")
+        if rota != "/metrics":
+            LATENCIA.labels(rota).observe(time.perf_counter() - inicio)
+            REQUISICOES.labels(rota, request.method, str(status)).inc()
+
 
 MAX_UPLOAD_BYTES = 20 * 1024 * 1024
 
@@ -59,6 +100,19 @@ def ler_csv_com_limite(contents: bytes) -> pd.DataFrame:
 @app.get("/")
 def home():
     return {"status": "Servidor rodando!", "modelo_configurado": MODEL_NAME}
+
+
+# [OBS] endpoint que o Prometheus consulta (pull)
+@app.get("/metrics", include_in_schema=False)
+def metrics():
+    return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+# [OBS] liga/desliga a falha da demonstração: /demo/falha/0.3 e /demo/falha/0
+@app.get("/demo/falha/{taxa}", include_in_schema=False)
+def definir_falha(taxa: float):
+    TAXA_FALHA["valor"] = max(0.0, min(1.0, taxa))
+    return {"taxa_de_erro": TAXA_FALHA["valor"]}
 
 
 @app.post("/analyze")

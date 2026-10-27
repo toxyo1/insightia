@@ -1,0 +1,10 @@
+groups:
+  - name: insightia
+    rules:
+      - alert: TaxaDeErrosAlta
+        expr: (sum(rate(http_requests_total{status=~"5.."}[1m])) or vector(0)) / sum(rate(http_requests_total[1m])) > 0.05
+        for: 30s
+        labels:
+          severity: critical
+        annotations:
+          summary: "Mais de 5% das requisições do Insightia estão falhando"
