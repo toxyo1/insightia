@@ -1,38 +1,63 @@
+
 services:
   insightia_api:
     build: ./backend
     ports:
-      - "8000:8000"
+      - "127.0.0.1:8001:8000"
     volumes:
       - ./data:/data
     env_file:
       - ./backend/.env
 
+  gateway:
+    build: ./gateway
+    environment:
+      INSIGHTIA_URL: "http://insightia_api:8000"
+    ports:
+      - "127.0.0.1:8002:8000"
+    depends_on:
+      - insightia_api
+
   carga:
     image: curlimages/curl
-    entrypoint: ["sh", "-c", "while true; do curl -s -o /dev/null http://insightia_api:8000/; sleep 0.2; done"]
-    depends_on: [insightia_api]
+    entrypoint:
+      - "sh"
+      - "-c"
+      - "while true; do curl -s -o /dev/null http://gateway:8000/; sleep 0.2; done"
+    depends_on:
+      - gateway
 
   prometheus:
     image: prom/prometheus:v2.54.1
     volumes:
-      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
-      - ./monitoring/rules.yml:/etc/prometheus/rules.yml
-    ports: ["9090:9090"]
-    depends_on: [insightia_api, alertmanager]
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./monitoring/rules.yml:/etc/prometheus/rules.yml:ro
+    ports:
+      - "127.0.0.1:9090:9090"
+    depends_on:
+      - insightia_api
+      - gateway
+      - alertmanager
 
   alertmanager:
     image: prom/alertmanager:v0.27.0
-    ports: ["9093:9093"]
+    volumes:
+      - ./monitoring/alertmanager.yml:/etc/alertmanager/alertmanager.yml:ro
+    command:
+      - "--config.file=/etc/alertmanager/alertmanager.yml"
+    ports:
+      - "127.0.0.1:9093:9093"
 
   grafana:
     image: grafana/grafana:11.2.0
     environment:
       GF_AUTH_ANONYMOUS_ENABLED: "true"
-      GF_AUTH_ANONYMOUS_ORG_ROLE: "Admin"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: "Viewer"
     volumes:
-      - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml
-      - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml
-      - ./monitoring/red-dashboard.json:/var/lib/grafana/dashboards/red-dashboard.json
-    ports: ["3000:3000"]
-    depends_on: [prometheus]
+      - ./monitoring/grafana-datasource.yml:/etc/grafana/provisioning/datasources/datasource.yml:ro
+      - ./monitoring/grafana-dashboards.yml:/etc/grafana/provisioning/dashboards/dashboards.yml:ro
+      - ./monitoring/red-dashboard.json:/var/lib/grafana/dashboards/red-dashboard.json:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      - prometheus

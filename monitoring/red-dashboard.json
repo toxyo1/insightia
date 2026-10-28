@@ -1,103 +1,248 @@
+
 {
-    "uid": "insightia-red",
-    "title": "Insightia - RED",
-    "schemaVersion": 39,
-    "version": 1,
-    "refresh": "5s",
-    "time": {
-        "from": "now-10m",
-        "to": "now"
-    },
-    "panels": [
-        {
-            "id": 1,
-            "type": "timeseries",
-            "title": "Rate: requisições por segundo",
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prom"
-            },
-            "gridPos": {
-                "h": 9,
-                "w": 8,
-                "x": 0,
-                "y": 0
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "reqps"
-                },
-                "overrides": []
-            },
-            "targets": [
-                {
-                    "refId": "A",
-                    "legendFormat": "req/s",
-                    "expr": "sum(rate(http_requests_total[1m]))"
-                }
-            ]
+  "uid": "insightia-red",
+  "title": "Insightia - Observabilidade de Sistemas Distribuidos",
+  "description": "Monitoramento RED do Insightia e do Gateway, com comparacao de falhas entre servicos.",
+  "tags": [
+    "observabilidade",
+    "sistemas-distribuidos",
+    "RED"
+  ],
+  "timezone": "browser",
+  "schemaVersion": 39,
+  "version": 3,
+  "refresh": "5s",
+  "time": {
+    "from": "now-5m",
+    "to": "now"
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Insightia - Rate (req/s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
         },
+        "overrides": []
+      },
+      "targets": [
         {
-            "id": 2,
-            "type": "timeseries",
-            "title": "Errors: taxa de erro 5xx",
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prom"
-            },
-            "gridPos": {
-                "h": 9,
-                "w": 8,
-                "x": 8,
-                "y": 0
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "percentunit",
-                    "min": 0
-                },
-                "overrides": []
-            },
-            "targets": [
-                {
-                    "refId": "A",
-                    "legendFormat": "% de erros",
-                    "expr": "(sum(rate(http_requests_total{status=~\"5..\"}[1m])) or vector(0)) / sum(rate(http_requests_total[1m]))"
-                }
-            ]
-        },
-        {
-            "id": 3,
-            "type": "timeseries",
-            "title": "Duration: latência",
-            "datasource": {
-                "type": "prometheus",
-                "uid": "prom"
-            },
-            "gridPos": {
-                "h": 9,
-                "w": 8,
-                "x": 16,
-                "y": 0
-            },
-            "fieldConfig": {
-                "defaults": {
-                    "unit": "s"
-                },
-                "overrides": []
-            },
-            "targets": [
-                {
-                    "refId": "A",
-                    "legendFormat": "p50",
-                    "expr": "histogram_quantile(0.5, sum by (le) (rate(http_request_duration_seconds_bucket[1m])))"
-                },
-                {
-                    "refId": "B",
-                    "legendFormat": "p95",
-                    "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket[1m])))"
-                }
-            ]
+          "refId": "A",
+          "expr": "sum(rate(http_requests_total{job=\"insightia\"}[1m]))",
+          "legendFormat": "Insightia",
+          "range": true
         }
-    ]
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Insightia - Errors (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(rate(http_requests_total{job=\"insightia\",status=~\"5..\"}[1m])) or vector(0)) / clamp_min(sum(rate(http_requests_total{job=\"insightia\"}[1m])), 0.000001)",
+          "legendFormat": "Erros Insightia",
+          "range": true
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "type": "timeseries",
+      "title": "Insightia - Duration p95",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 0
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(http_request_duration_seconds_bucket{job=\"insightia\"}[1m])))",
+          "legendFormat": "p95 Insightia",
+          "range": true
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "type": "timeseries",
+      "title": "Gateway - Rate (req/s)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 0,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(gateway_http_requests_total{job=\"gateway\"}[1m]))",
+          "legendFormat": "Gateway",
+          "range": true
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "type": "timeseries",
+      "title": "Gateway - Errors (%)",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 8,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "(sum(rate(gateway_http_requests_total{job=\"gateway\",status=~\"5..\"}[1m])) or vector(0)) / clamp_min(sum(rate(gateway_http_requests_total{job=\"gateway\"}[1m])), 0.000001)",
+          "legendFormat": "Erros Gateway",
+          "range": true
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "type": "timeseries",
+      "title": "Gateway - Duration p95",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 8,
+        "x": 16,
+        "y": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(gateway_http_request_duration_seconds_bucket{job=\"gateway\"}[1m])))",
+          "legendFormat": "p95 Gateway",
+          "range": true
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "type": "timeseries",
+      "title": "Propagacao de falhas - Insightia 500 x Gateway 502",
+      "datasource": {
+        "type": "prometheus",
+        "uid": "prom"
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 16
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "reqps",
+          "min": 0
+        },
+        "overrides": []
+      },
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom"
+        },
+        "tooltip": {
+          "mode": "multi"
+        }
+      },
+      "targets": [
+        {
+          "refId": "A",
+          "expr": "sum(rate(http_requests_total{job=\"insightia\",status=\"500\"}[1m])) or vector(0)",
+          "legendFormat": "Insightia - HTTP 500",
+          "range": true
+        },
+        {
+          "refId": "B",
+          "expr": "sum(rate(gateway_http_requests_total{job=\"gateway\",status=\"502\"}[1m])) or vector(0)",
+          "legendFormat": "Gateway - HTTP 502",
+          "range": true
+        }
+      ]
+    }
+  ]
 }
